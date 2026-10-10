@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      LSPosed 作用域：
+        com.android.bluetooth = BT 栈（AdapterServiceConfig / LeAudioService）
+        com.android.settings  = 开发者选项 UI 锁定
+        com.xiaomi.bluetooth  = MIUI 云控 / 白名单
+        system                = system_server（BluetoothAdapter.isLeAudioSupported）
+    -->
+    <string-array name="xposed_scope">
+        <item>com.android.bluetooth</item>
+        <item>com.android.settings</item>
+        <item>com.xiaomi.bluetooth</item>
+        <item>system</item>
+    </string-array>
+</resources>

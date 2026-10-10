@@ -1,0 +1,28 @@
+# Build outputs
+build/
+app/build/
+.gradle/
+.kotlin/
+*.apk
+*.aab
+
+# Local config
+local.properties
+
+# Analysis artifacts
+.analysis/
+
+# Logs
+*.log
+*.txt
+
+# Release artifacts
+release/
+
+# IDE
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db

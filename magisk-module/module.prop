@@ -1,0 +1,6 @@
+id=leaudio-props
+name=LE Audio Props
+version=v0.1.0
+versionCode=1
+author=leaudio-unlock
+description=Force LE Audio related props on HyperOS (fuxi). Use only if LSPosed module alone is insufficient.
