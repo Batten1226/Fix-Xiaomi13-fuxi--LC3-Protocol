@@ -530,33 +530,18 @@ class LeAudioUnlockModule : IXposedHookLoadPackage {
                 logOnce("setLeAudioStatus($status) 被调用，执行实际操作")
                 runCatching {
                     val cmd = if (status == 1) {
-                        // 启用 LE Audio
                         "resetprop persist.bluetooth.leaudio_switcher.disabled false; " +
                         "resetprop bluetooth.profile.bap.unicast.client.enabled true; " +
-                        "resetprop bluetooth.profile.csip.set.coordinator.enabled true"
+                        "resetprop bluetooth.profile.csip.set.coordinator.enabled true; " +
+                        "resetprop bluetooth.profile.vc.controller.enabled true; " +
+                        "svc bluetooth disable && sleep 2 && svc bluetooth enable"
                     } else {
-                        // 禁用 LE Audio
                         "resetprop persist.bluetooth.leaudio_switcher.disabled true; " +
                         "resetprop bluetooth.profile.bap.unicast.client.enabled false; " +
-                        "resetprop bluetooth.profile.csip.set.coordinator.enabled false"
+                        "svc bluetooth disable && sleep 2 && svc bluetooth enable"
                     }
                     Runtime.getRuntime().exec(arrayOf("su", "-c", cmd))
-                    logOnce("setLeAudioStatus($status) -> resetprop 已执行")
-
-                    // 通过 Bluetooth API 更新连接策略
-                    if (status == 1) {
-                        updateConnectionPolicy(cl, "LE_AUDIO", 100)
-                    } else {
-                        updateConnectionPolicy(cl, "LE_AUDIO", 0)
-                    }
-
-                    // 延迟 3 秒再重启蓝牙，让 updateConnectionPolicy 的异步回调先执行
-                    Thread {
-                        Thread.sleep(3000)
-                        Runtime.getRuntime().exec(arrayOf(
-                            "su", "-c",
-                            "svc bluetooth disable && sleep 2 && svc bluetooth enable"))
-                    }.start()
+                    logOnce("setLeAudioStatus($status) -> 仅设属性+重启蓝牙")
                 }.onFailure { log("setLeAudioStatus 失败: $it") }
             }
             // findLeAddress 返回 null 导致 LE 绑定被跳过，返回耳机的 LE 地址
