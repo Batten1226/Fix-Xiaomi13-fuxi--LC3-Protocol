@@ -527,7 +527,7 @@ class LeAudioUnlockModule : IXposedHookLoadPackage {
             // setLeAudioStatus 是空方法（settingslib stub），我们来真正执行
             hookAll(cachedDeviceCls2, "setLeAudioStatus") { param ->
                 val status = param.args.getOrNull(0) as? Int ?: return@hookAll
-                logOnce("setLeAudioStatus($status) 被调用，执行实际操作")
+                logOnce("setLeAudioStatus($status) 被调用")
                 runCatching {
                     val cmd = if (status == 1) {
                         "resetprop persist.bluetooth.leaudio_switcher.disabled false; " +
@@ -541,7 +541,19 @@ class LeAudioUnlockModule : IXposedHookLoadPackage {
                         "svc bluetooth disable && sleep 2 && svc bluetooth enable"
                     }
                     Runtime.getRuntime().exec(arrayOf("su", "-c", cmd))
-                    logOnce("setLeAudioStatus($status) -> 仅设属性+重启蓝牙")
+                    logOnce("setLeAudioStatus($status) -> 属性+重启蓝牙")
+
+                    // 启用时：等蓝牙启动完成后设连接策略（避免策略被系统重置）
+                    if (status == 1) {
+                        Thread {
+                            Thread.sleep(8000)  // 等蓝牙完全启动
+                            updateConnectionPolicy(cl, "LE_AUDIO", 100)
+                            updateConnectionPolicy(cl, "CSIP_SET_COORDINATOR", 100)
+                            updateConnectionPolicy(cl, "VOLUME_CONTROL", 100)
+                            updateConnectionPolicy(cl, "LE_CALL_CONTROL", 100)
+                            logOnce("setLeAudioStatus(1) -> 连接策略已设置")
+                        }.start()
+                    }
                 }.onFailure { log("setLeAudioStatus 失败: $it") }
             }
             // findLeAddress 返回 null 导致 LE 绑定被跳过，返回耳机的 LE 地址
@@ -785,6 +797,9 @@ class LeAudioUnlockModule : IXposedHookLoadPackage {
             val profileId = when (profile) {
                 "A2DP" -> 2
                 "LE_AUDIO" -> 22
+                "CSIP_SET_COORDINATOR" -> 25
+                "VOLUME_CONTROL" -> 23
+                "LE_CALL_CONTROL" -> 27
                 else -> return
             }
 
